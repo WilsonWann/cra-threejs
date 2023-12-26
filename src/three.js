@@ -63,33 +63,52 @@ function MyThree() {
       window.addEventListener('mousemove', (event) => {
         cursor.x = event.clientX / window.innerWidth - 0.5 // 原因是希望x軸的數值在-0.5至0.5之間, 螢幕中心為0 
         cursor.y = 0.5 - event.clientY / window.innerHeight // 原因是希望y軸的數值在-0.5至0.5之間, 螢幕中心為0 
-        console.log(cursor.x, cursor.y)
+        // console.log(cursor.x, cursor.y)
       })
 
       // document.body.appendChild( renderer.domElement )
       // use ref as a mount point of the Three.js scene instead of the document.body
       refContainer.current && refContainer.current.appendChild(renderer.domElement)
       var geometry = new THREE.BoxGeometry(1, 1, 1)
-      var geometry3 = new THREE.BoxGeometry(2, 0.5, 1)
+      var planeGeometry = new THREE.PlaneGeometry(1, 1)
+      var circleGeometry = new THREE.CircleGeometry(2, 100)
+      var coneGeometry = new THREE.ConeGeometry(1, 3, 100)
+      var cylinderGeometry = new THREE.CylinderGeometry(2, 2, 2, 100)
+      var ringGeometry = new THREE.RingGeometry(1, 3, 30, 100)
+      var torusGeometry = new THREE.TorusGeometry(2, 1, 80, 80)
+      var bufferGeometry = new THREE.BufferGeometry()
+
+      const positionArray = new Float32Array(9)
+      positionArray[0] = 0
+      positionArray[1] = 0
+      positionArray[2] = 0
+
+      positionArray[3] = 0
+      positionArray[4] = 1
+      positionArray[5] = 0
+
+      positionArray[6] = 1
+      positionArray[7] = 0
+      positionArray[8] = 0
+      // var geometry3 = new THREE.BoxGeometry(2, 0.5, 1)
       var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
-      var material2 = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true })
-      var material3 = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true })
+      var material2 = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide, wireframe: true })
+      var material_buffer = new THREE.MeshBasicMaterial({ color: 0x06ff06, wireframe: true })
       var cube = new THREE.Mesh(geometry, material)
-      var cube2 = new THREE.Mesh(geometry, material2)
-      cube2.position.set(1, 1, 1)
-      var cube3 = new THREE.Mesh(geometry3, material3)
-      cube3.position.set(-1. - 2, -1)
-      const group = new THREE.Group()
+      var plane = new THREE.Mesh(planeGeometry, material2)
+      var circle = new THREE.Mesh(circleGeometry, material2)
+      var cone = new THREE.Mesh(coneGeometry, material2)
+      var cylinder = new THREE.Mesh(cylinderGeometry, material2)
+      var ring = new THREE.Mesh(ringGeometry, material2)
+      var torus = new THREE.Mesh(torusGeometry, material2)
+      bufferGeometry.setAttribute('position', new THREE.BufferAttribute(positionArray, 3))
 
-      scene.add(group)
+      var buffer = new THREE.Mesh(bufferGeometry, material_buffer)
+      scene.add(buffer)
 
-      group.add(cube)
-      group.add(cube2)
-      group.add(cube3)
       var axesHelper = new THREE.AxesHelper(10)
       scene.add(axesHelper)
 
-      // scene.add(cube)
       const UPPER_LIMIT = 10
       const LOWER_LIMIT = 0
       const PI = Math.PI
@@ -100,21 +119,7 @@ function MyThree() {
       const camera_oscillate_y = createOscillator(camera.position.y, PI / 2, -PI / 2)
       const camera_oscillate_z = createOscillator(camera.position.z, UPPER_LIMIT, LOWER_LIMIT)
 
-      const cube3_y_oscillate = createOscillator(cube3.position.y, 1, -1)
-
       const clock = new THREE.Clock()
-
-      const animate = contextSafe(() => {
-        gsap.to(group.position, { duration: 1, delay: 1, x: 4 })
-        gsap.to(group.rotation, { duration: 1, delay: 3, z: PI * 0.5 })
-        gsap.to(group.position, { duration: 1, delay: 4, x: 0 })
-        gsap.to(group.rotation, { duration: 1, delay: 6, z: 0 })
-      })
-
-      setInterval(() => {
-
-        animate()
-      }, 7_000)
 
       var animate1 = function () {
         const elapsedTime = clock.getElapsedTime()
@@ -125,28 +130,14 @@ function MyThree() {
         const y_oscillate = createSineOscillator(camera_oscillate_y())
         camera.position.x = x_oscillate()
         camera.position.y = y_oscillate()
-        camera.position.z = camera_oscillate_z()
-        cube.rotation.x += 0.01 * Math.sin(elapsedTime)
-        cube.rotation.y += 0.01 * Math.cos(elapsedTime)
+        // camera.position.z = camera_oscillate_z()
+        cube.rotation.x += 0.01
+        cube.rotation.y += 0.01
+
+        // cone.rotation.z = PI / 2
         renderer.render(scene, camera)
       }
       animate1()
-      var animate2 = function () {
-        requestAnimationFrame(animate2)
-        cube2.rotation.x -= 0.01
-        cube2.rotation.y -= 0.01
-        renderer.render(scene, camera)
-      }
-      animate2()
-      var animate3 = function () {
-        requestAnimationFrame(animate3)
-        const y_oscillate = createSineOscillator(cube3_y_oscillate())
-        cube3.position.y = y_oscillate()
-        cube3.rotation.x -= 0.01
-        cube3.rotation.y += 0.01
-        renderer.render(scene, camera)
-      }
-      animate3()
     }
     return () => {
       effectRan.current = true
