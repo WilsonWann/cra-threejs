@@ -36,11 +36,36 @@ function MyThree() {
     }
 
     if (effectRan.current === true) {
+
       // === THREE.JS CODE START ===
-      var scene = new THREE.Scene()
+      const sizes = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
+      const cursor = { x: 0, y: 0 }
       var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+      var scene = new THREE.Scene()
+
       var renderer = new THREE.WebGLRenderer()
-      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setSize(sizes.width, sizes.height)
+      window.addEventListener('resize', () => {
+        // update sizes
+        sizes.width = window.innerWidth
+        sizes.height = window.innerHeight
+
+        // update camera
+        camera.aspect = sizes.width / sizes.height
+        camera.updateProjectionMatrix()
+
+        // update renderer
+        renderer.setSize(sizes.width, sizes.height)
+      })
+      window.addEventListener('mousemove', (event) => {
+        cursor.x = event.clientX / window.innerWidth - 0.5 // 原因是希望x軸的數值在-0.5至0.5之間, 螢幕中心為0 
+        cursor.y = 0.5 - event.clientY / window.innerHeight // 原因是希望y軸的數值在-0.5至0.5之間, 螢幕中心為0 
+        console.log(cursor.x, cursor.y)
+      })
+
       // document.body.appendChild( renderer.domElement )
       // use ref as a mount point of the Three.js scene instead of the document.body
       refContainer.current && refContainer.current.appendChild(renderer.domElement)
@@ -77,6 +102,8 @@ function MyThree() {
 
       const cube3_y_oscillate = createOscillator(cube3.position.y, 1, -1)
 
+      const clock = new THREE.Clock()
+
       const animate = contextSafe(() => {
         gsap.to(group.position, { duration: 1, delay: 1, x: 4 })
         gsap.to(group.rotation, { duration: 1, delay: 3, z: PI * 0.5 })
@@ -85,18 +112,22 @@ function MyThree() {
       })
 
       setInterval(() => {
+
         animate()
       }, 7_000)
 
       var animate1 = function () {
+        const elapsedTime = clock.getElapsedTime()
+        // camera.position.x = cursor.x
+        // camera.position.y = cursor.y
         requestAnimationFrame(animate1)
         const x_oscillate = createCosineOscillator(camera_oscillate_x())
         const y_oscillate = createSineOscillator(camera_oscillate_y())
         camera.position.x = x_oscillate()
         camera.position.y = y_oscillate()
         camera.position.z = camera_oscillate_z()
-        cube.rotation.x += 0.01
-        cube.rotation.y += 0.01
+        cube.rotation.x += 0.01 * Math.sin(elapsedTime)
+        cube.rotation.y += 0.01 * Math.cos(elapsedTime)
         renderer.render(scene, camera)
       }
       animate1()
@@ -122,6 +153,9 @@ function MyThree() {
     }
   }, [contextSafe])
 
+  useEffect(() => {
+
+  }, []);
   return (
     <div ref={refContainer} />
   )
